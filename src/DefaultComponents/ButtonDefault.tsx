@@ -8,7 +8,7 @@ interface ButtonGenericProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
   children: React.ReactNode
 }
 
-const ButtonGeneric = ({ children, ...rest }: ButtonGenericProps) => {
+const ButtonDefault = ({ children, ...rest }: ButtonGenericProps) => {
   return (
     <button {...rest} type="submit" className={basicStyle + colorStyle}>
       {children}
@@ -16,4 +16,4 @@ const ButtonGeneric = ({ children, ...rest }: ButtonGenericProps) => {
   )
 }
 
-export default ButtonGeneric
+export default ButtonDefault

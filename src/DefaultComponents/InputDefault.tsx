@@ -9,7 +9,7 @@ const baseStyle =
   'block w-full pl-10 pr-3 py-3 border rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 transition-all duration-200'
 const borderStyle = 'border-gray-200 focus:ring-amber-500 focus:border-transparent'
 const errorStyle = 'border-red-500 focus:ring-red-500 focus:border-red-500'
-const InputGeneric = ({ formik, name, ...rest }: InputGenericProps) => {
+const InputDefault = ({ formik, name, ...rest }: InputGenericProps) => {
   const errorInput = formik.errors[name] ? (formik.errors[name] as string) : null
 
   return (
@@ -29,4 +29,4 @@ const InputGeneric = ({ formik, name, ...rest }: InputGenericProps) => {
   )
 }
 
-export default InputGeneric
+export default InputDefault
