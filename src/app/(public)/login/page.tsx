@@ -1,8 +1,8 @@
 'use client'
 
 import { loginSchema } from '@/app/(public)/login/schema/loginSchema'
-import ButtonGeneric from '@/genericComponents/ButtonGeneric'
-import InputGeneric from '@/genericComponents/InputGeneric'
+import ButtonGeneric from '@/DefaultComponents/ButtonDefault'
+import InputGeneric from '@/DefaultComponents/InputDefault'
 import { Field, useFormik } from 'formik'
 import { Home, Lock, Mail } from 'lucide-react'
 
