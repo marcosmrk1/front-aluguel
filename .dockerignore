@@ -3,5 +3,4 @@ node_modules
 .next
 Dockerfile
 .dockerignore
-.package.json
-.package-lock.json
+ 
