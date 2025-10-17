@@ -1,8 +1,24 @@
 'use client'
 
+import { loginSchema } from '@/app/(public)/login/schema/loginSchema'
+import ButtonGeneric from '@/genericComponents/ButtonGeneric'
+import InputGeneric from '@/genericComponents/InputGeneric'
+import { Field, useFormik } from 'formik'
 import { Home, Lock, Mail } from 'lucide-react'
 
 export default function Login() {
+  const formik = useFormik({
+    initialValues: {
+      email: '',
+      password: '',
+    },
+    onSubmit: (values) => {
+      console.log(values)
+    },
+    validateOnBlur: true,
+    validateOnChange: false,
+    validationSchema: loginSchema,
+  })
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-amber-50 via-orange-50 to-red-50 p-4">
       <div className="w-full max-w-md">
@@ -14,7 +30,7 @@ export default function Login() {
           <p className="text-gray-600">Seu sistema de organização de casas de aluguel</p>
         </div>
         <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl border border-white/20 p-8">
-          <form onSubmit={() => console.log('oi')} className="space-y-6">
+          <form onSubmit={formik.handleSubmit} className="space-y-6">
             <div>
               <label
                 htmlFor="email"
@@ -26,14 +42,11 @@ export default function Login() {
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Mail className="h-5 w-5 text-gray-400" />
                 </div>
-                <input
-                  id="email"
+                <InputGeneric
+                  formik={formik}
                   name="email"
+                  id="email"
                   type="email"
-                  //   value={email}
-                  //   onChange={(e) => setEmail(e.target.value)}
-                  required
-                  className="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200"
                   placeholder="Digite seu E-mail"
                 />
               </div>
@@ -42,7 +55,7 @@ export default function Login() {
             {/* Password Field */}
             <div>
               <label
-                htmlFor="Senha"
+                htmlFor="password"
                 className="block text-sm font-medium text-gray-700 mb-2"
               >
                 Senha
@@ -51,32 +64,16 @@ export default function Login() {
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Lock className="h-5 w-5 text-gray-400" />
                 </div>
-                <input
+                <InputGeneric
+                  formik={formik}
                   id="password"
                   name="password"
                   type="password"
-                  //   value={password}
-                  //   onChange={(e) => setPassword(e.target.value)}
-                  required
-                  className="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200"
                   placeholder="Digite sua senha"
                 />
               </div>
             </div>
-
-            {/* Login Button */}
-            <button
-              type="submit"
-              //   disabled={isLoading}
-              className="w-full flex items-center justify-center px-4 py-3 border border-transparent rounded-xl shadow-lg text-base font-medium text-white bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-            >
-              {/* {isLoading ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
-              ) : (
-                'Entrar'
-              )} */}
-              Entrar
-            </button>
+            <ButtonGeneric type="submit">Entrar</ButtonGeneric>
           </form>
 
           {/* Divider */}
