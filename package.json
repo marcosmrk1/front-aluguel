@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
-    "start": "next start"
+    "start": "next start",
+    "prepare": "husky"
   },
   "dependencies": {
     "lint-staged": "^16.2.4",
