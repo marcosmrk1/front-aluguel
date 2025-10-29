@@ -1,3 +1,4 @@
+import { Input } from '@/components/ui/input'
 import { FormikProps } from 'formik'
 import React from 'react'
 interface InputGenericProps extends React.InputHTMLAttributes<HTMLInputElement> {
@@ -15,8 +16,8 @@ const InputDefault = ({ formik, name, ...rest }: InputGenericProps) => {
   return (
     <>
       <div>
-        <input
-          className={`${baseStyle} ${errorInput ? errorStyle : borderStyle} `}
+        <Input
+          className={baseStyle}
           onChange={formik.handleChange}
           value={formik.values[name] || ''}
           {...rest}

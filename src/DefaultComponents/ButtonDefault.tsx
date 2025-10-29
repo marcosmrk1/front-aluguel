@@ -1,3 +1,5 @@
+import { Button } from '../../@/components/ui/button'
+
 const basicStyle =
   'w-full flex items-center justify-center px-4 py-3 border rounded-xl shadow-lg text-base font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200'
 
@@ -10,9 +12,9 @@ interface ButtonGenericProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 
 const ButtonDefault = ({ children, ...rest }: ButtonGenericProps) => {
   return (
-    <button {...rest} type="submit" className={basicStyle + colorStyle}>
+    <Button {...rest} type="submit" className={basicStyle + colorStyle}>
       {children}
-    </button>
+    </Button>
   )
 }
 
