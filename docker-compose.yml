@@ -1,0 +1,12 @@
+services:
+  nextapp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: alguel-frontend
+    ports:
+      - '3000:3000'
+    volumes:
+      - .:/app
+
+    restart: unless-stopped
