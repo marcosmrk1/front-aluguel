@@ -10,10 +10,12 @@ import {
 } from 'lucide-react'
 import { maskCpf } from '@/utils/mask/maskCpf'
 import { maskPhone } from '@/utils/mask/maskPhone'
-import { registerSchema } from '@/components/Login/schema/RegisterSchema'
+import { registerSchema } from '@/schema/RegisterSchema'
 import ButtonDefault from '@/components/DefaultComponents/ButtonDefault'
+import { useCreateProprietario } from '@/hooks/proprietario/useCreate/useCreateProprietario'
 
 const FormRegister = () => {
+  const { createUser } = useCreateProprietario()
   const formik = useFormik({
     initialValues: {
       email: '',
@@ -23,10 +25,10 @@ const FormRegister = () => {
       nome: '',
     },
     onSubmit: (values) => {
-      console.log(values)
+      createUser.mutate(values)
     },
     validationSchema: registerSchema,
-    validateOnBlur: true,
+    validateOnBlur: false,
     validateOnChange: false,
   })
   return (

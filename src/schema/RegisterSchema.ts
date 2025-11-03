@@ -1,4 +1,5 @@
 import * as yup from 'yup'
+
 const registerSchema = yup.object().shape({
   nome: yup.string().required('O nome é obrigatório'),
   cpf: yup
@@ -8,7 +9,10 @@ const registerSchema = yup.object().shape({
     .length(14, 'O CPF deve ter 14 caracteres'),
   telefone: yup
     .string()
-    .matches(/^\(\d{2}\) \d{5}-\d{4}$/, 'Telefone inválido')
+    .matches(
+      /^\(\d{2}\) \d{4,5}-\d{4}$/,
+      'Telefone inválido. Use o formato (XX) XXXXX-XXXX ou (XX) XXXX-XXXX',
+    )
     .required('O telefone é obrigatório'),
   email: yup.string().email('E-mail inválido').required('O e-mail é obrigatório'),
   password: yup

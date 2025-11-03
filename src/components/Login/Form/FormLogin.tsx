@@ -1,7 +1,7 @@
 'use client'
 import ButtonDefault from '@/components/DefaultComponents/ButtonDefault'
 import InputDefault from '@/components/DefaultComponents/InputDefault'
-import { loginSchema } from '@/components/Login/schema/loginSchema'
+import { loginSchema } from '@/schema/loginSchema'
 import { useFormik } from 'formik'
 import { Lock, Mail } from 'lucide-react'
 
