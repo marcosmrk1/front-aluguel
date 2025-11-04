@@ -1,4 +1,5 @@
 import { useFormik } from 'formik'
+import { useEffect } from 'react'
 import InputDefault from '@/components/DefaultComponents/InputDefault'
 import {
   EqualApproximatelyIcon,
@@ -13,9 +14,11 @@ import { maskPhone } from '@/utils/mask/maskPhone'
 import { registerSchema } from '@/schema/RegisterSchema'
 import ButtonDefault from '@/components/DefaultComponents/ButtonDefault'
 import { useCreateProprietario } from '@/hooks/proprietario/useCreate/useCreateProprietario'
+import { useRouter } from 'next/navigation'
 
 const FormRegister = () => {
   const { createUser } = useCreateProprietario()
+  const router = useRouter()
   const formik = useFormik({
     initialValues: {
       email: '',
@@ -31,6 +34,14 @@ const FormRegister = () => {
     validateOnBlur: false,
     validateOnChange: false,
   })
+
+  useEffect(() => {
+    if (createUser.isSuccess) {
+      formik.resetForm()
+      router.push('/login')
+    }
+  }, [createUser.isSuccess])
+
   return (
     <div className="flex flex-col">
       <form onSubmit={formik.handleSubmit}>
@@ -93,7 +104,9 @@ const FormRegister = () => {
           />
         </div>
         <div className="mt-6">
-          <ButtonDefault type="submit">Registrar-se</ButtonDefault>
+          <ButtonDefault type="submit" disabled={createUser.isPending}>
+            Registrar-se
+          </ButtonDefault>
         </div>
       </form>
     </div>

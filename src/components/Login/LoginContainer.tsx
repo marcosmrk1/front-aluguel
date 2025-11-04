@@ -3,12 +3,14 @@ import { ModeToggle } from '@/components/DefaultComponents/modeToggle'
 import { FormLogin } from '@/components/Login/Form/FormLogin'
 import { Card } from '@/components/ui/card'
 import { Home } from 'lucide-react'
-import { useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { FormRegister } from '@/components/Login/Form/FormRegister'
+import { usePathname } from 'next/navigation'
+import Link from 'next/link'
 
 const LoginContainer = () => {
-  const [registerForm, setRegisterForm] = useState(false)
+  const pathname = usePathname()
+  const isRegisterPage = pathname === '/register'
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br">
@@ -23,7 +25,7 @@ const LoginContainer = () => {
         </div>
         <Card className="backdrop-blur-sm rounded-3xl shadow-xl border p-8">
           <AnimatePresence mode="wait">
-            {registerForm ? (
+            {isRegisterPage ? (
               <motion.div
                 key="register"
                 initial={{ opacity: 0, y: 20 }}
@@ -63,16 +65,12 @@ const LoginContainer = () => {
               </div>
               <div className="relative flex justify-center text-sm">
                 <span className="px-3 rounded-full">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      registerForm ? setRegisterForm(false) : setRegisterForm(true)
-                    }
+                  <Link
+                    href={isRegisterPage ? '/login' : '/register'}
+                    className="font-medium underline text-amber-link"
                   >
-                    <a className="font-medium underline text-amber-link">
-                      {registerForm ? 'Voltar' : 'Registre-se'}
-                    </a>
-                  </button>
+                    {isRegisterPage ? 'Voltar' : 'Registre-se'}
+                  </Link>
                 </span>
               </div>
             </div>

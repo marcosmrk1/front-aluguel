@@ -1,3 +1,4 @@
+import { Loader2 } from 'lucide-react'
 import { Button } from '../../../@/components/ui/button'
 
 const basicStyle =
@@ -12,10 +13,20 @@ interface ButtonGenericProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 
 const ButtonDefault = ({ children, ...rest }: ButtonGenericProps) => {
   return (
-    <Button {...rest} type="submit" className={basicStyle + colorStyle}>
-      {children}
+    <Button
+      {...rest}
+      type="submit"
+      className={basicStyle + colorStyle}
+      disabled={rest.disabled}
+    >
+      {rest.disabled ? (
+        <>
+          Carregando... <Loader2 className="w-4 h-4 animate-spin" />
+        </>
+      ) : (
+        children
+      )}
     </Button>
   )
 }
-
 export default ButtonDefault

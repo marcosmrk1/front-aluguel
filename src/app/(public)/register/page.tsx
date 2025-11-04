@@ -2,11 +2,11 @@ import { LoginContainer } from '@/components/Login/LoginContainer'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Login - Sistema de Aluguel',
-  description: 'Faça login no sistema de gestão de aluguel',
+  title: 'Registro - Sistema de Aluguel',
+  description: 'Crie sua conta no sistema de gestão de aluguel',
 }
 
-export default function LoginPage() {
+export default function RegisterPage() {
   return (
     <div>
       <LoginContainer />

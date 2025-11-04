@@ -1,7 +1,9 @@
 import { endPointService } from '@/services/endPointService'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { IProprietario } from '@/.interface/IProprietario'
 import { toast } from 'react-toastify'
+import { handleAxiosError } from '@/utils/defaultMessagesAxios/handleAxiosError'
+import { handleAxiosSuccess } from '@/utils/defaultMessagesAxios/handleAxiosSuccess'
 export function useCreateProprietario() {
   const queryClient = useQueryClient()
   console.log(process.env.API_URL)
@@ -11,11 +13,10 @@ export function useCreateProprietario() {
       endPointService.create<IProprietario>('/proprietario', newUser),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['proprietario'] })
-      toast.success('Proprietário criado com sucesso!')
+      handleAxiosSuccess('Proprietário criado com sucesso!')
     },
-    onError(error, variables, onMutateResult, context) {
-      console.log(error)
-      toast.error(error.message || 'Erro ao criar proprietário.')
+    onError(error) {
+      handleAxiosError(error, 'Erro ao criar proprietário.')
     },
   })
 
