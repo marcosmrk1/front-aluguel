@@ -18,6 +18,7 @@ import { useRouter } from 'next/navigation'
 
 const FormRegister = () => {
   const { createUser } = useCreateProprietario()
+
   const router = useRouter()
   const formik = useFormik({
     initialValues: {

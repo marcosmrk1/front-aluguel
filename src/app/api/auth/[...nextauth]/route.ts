@@ -18,9 +18,12 @@ declare module 'next-auth' {
     exp?: number
   }
 }
+const URL_BACKEND = process.env.NEXT_PUBLIC_DEVELOP_ENV_ENDPOINT
+  ? process.env.NEXT_PUBLIC_URL_DOCKER_WINDOWS_WITH_LINUX
+  : process.env.NEXT_PUBLIC_API_URL
 const refreshToken = async (refreshToken: string) => {
   try {
-    const res = await fetch(`http://localhost:4000/auth/refresh-token`, {
+    const res = await fetch(`${URL_BACKEND}/refresh-token`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ refreshToken }),
@@ -50,11 +53,12 @@ const handler = NextAuth({
       ): Promise<any> {
         if (!credentials) return null
         const { email, password } = credentials
-        const res = await fetch('http://localhost:4000/auth', {
+        const res = await fetch(`${URL_BACKEND}/auth`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email, password }),
         })
+
         const user = await res.json()
         if (user?.accessToken) {
           return user
@@ -70,18 +74,19 @@ const handler = NextAuth({
   session: {
     strategy: 'jwt',
   },
+
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
         token.accessToken = user.accessToken
         token.refreshToken = user.refreshToken
-        token.exp = user.exp // garanta que exp está vindo do backend
+        token.exp = user.exp
       }
-      // Se NÃO expirou, retorna o token atual
+
       if (token.exp && Date.now() < (token.exp as number) * 1000) {
         return token
       }
-      // Se expirou, tenta renovar (se houver refreshToken)
+
       if (token.refreshToken) {
         const refreshed = await refreshToken(token.refreshToken as string)
         if (refreshed?.accessToken) {
@@ -102,10 +107,9 @@ const handler = NextAuth({
       if (account?.provider === 'google') {
         const payloadForBackend = {
           email: user.email,
-          nome: user.name, // troque 'name' por 'nome'
-          googleId: user.id, // Use o ID real do Google!
+          nome: user.name,
+          googleId: user.id,
         }
-        console.log('Payload for backend:', payloadForBackend)
         await sendUserGoogleForBackend(payloadForBackend)
       }
       return true
@@ -113,10 +117,11 @@ const handler = NextAuth({
   },
 })
 const sendUserGoogleForBackend = async (profile: any) => {
-  const res = await fetch('http://host.docker.internal:4000/auth/social', {
+  ;`${URL_BACKEND}/auth/social`
+  const res = await fetch(`${URL_BACKEND}/auth/social`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(profile), // CERTO
+    body: JSON.stringify(profile),
   })
 
   const data = await res.json()

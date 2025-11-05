@@ -5,3 +5,4 @@ export interface IProprietario {
   cpf: string
   password: string
 }
+export type IProprietarioLogin = Pick<IProprietario, 'email' | 'password'>

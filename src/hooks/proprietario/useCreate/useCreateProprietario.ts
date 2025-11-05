@@ -6,7 +6,6 @@ import { handleAxiosError } from '@/utils/defaultMessagesAxios/handleAxiosError'
 import { handleAxiosSuccess } from '@/utils/defaultMessagesAxios/handleAxiosSuccess'
 export function useCreateProprietario() {
   const queryClient = useQueryClient()
-  console.log(process.env.API_URL)
 
   const createUser = useMutation({
     mutationFn: (newUser: IProprietario) =>

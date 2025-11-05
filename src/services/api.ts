@@ -1,43 +1,39 @@
 import axios from 'axios'
+import { getSession } from 'next-auth/react'
 
 /**
- * Instância configurada do Axios para comunicação com a API backend.
- * Centraliza todas as configurações de requisição HTTP, incluindo baseURL, headers padrão e interceptors.
- * ⚠️ Roda apenas no client-side (navegador). Não pode ser usado em Server Components ou Server Actions.
+ * Instância global do Axios configurada para comunicação com o backend.
  */
 export const api = axios.create({
-  baseURL: 'http://localhost:4000',
+  baseURL: process.env.NEXT_PUBLIC_API_URL,
   headers: {
     'Content-Type': 'application/json',
   },
 })
 
 /**
- * Interceptor de Request executado ANTES de cada requisição HTTP ser enviada ao servidor.
- * Armazena o token de autenticação no cookieStore antes da requisição.
- * @param config - Configuração da requisição
+ * Interceptor de Request — executa ANTES de cada requisição.
+ * Pega o token do NextAuth e injeta no header Authorization.
  */
-api.interceptors.request.use((config) => {
-  cookieStore.set('token', 'Bearer' + config.headers?.Authorization || '')
+api.interceptors.request.use(async (config) => {
+  const session = await getSession()
+  console.log(session, 'o que esta acotnecendo aqui')
+  if (session?.accessToken) {
+    config.headers.Authorization = `Bearer ${session.accessToken}`
+  }
+
   return config
 })
 
 /**
- * Interceptor de Response executado APÓS receber a resposta do servidor.
- * Trata respostas de sucesso e erros HTTP.
- * ⚠️ NÃO exibe toasts aqui - isso é feito nos hooks com mensagens personalizadas.
- * @param response - Resposta de sucesso (status 2xx)
- * @param error - Erro HTTP (status 4xx, 5xx) ou erro de rede
+ * Interceptor de Response — trata erros e respostas.
  */
 api.interceptors.response.use(
-  (response) => {
-    if (response.status === 401) {
-      console.warn('Unauthorized! Please log in again.')
-    }
-    return response
-  },
+  (response) => response,
   (error) => {
-    console.warn(error)
+    if (error.response?.status === 401) {
+      console.warn('Token expirado ou não autorizado.')
+    }
     return Promise.reject(error)
   },
 )

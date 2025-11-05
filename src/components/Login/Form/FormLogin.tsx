@@ -1,18 +1,20 @@
 'use client'
 import ButtonDefault from '@/components/DefaultComponents/ButtonDefault'
 import InputDefault from '@/components/DefaultComponents/InputDefault'
+import { usePostAuth } from '@/hooks/auth/usePost/usePostAuth'
 import { loginSchema } from '@/schema/loginSchema'
 import { useFormik } from 'formik'
 import { Lock, Mail } from 'lucide-react'
 
 const FormLogin = () => {
+  const { loginUser } = usePostAuth()
   const formik = useFormik({
     initialValues: {
       email: '',
       password: '',
     },
     onSubmit: (values) => {
-      console.log(values)
+      loginUser.mutate(values)
     },
     validateOnBlur: true,
     validateOnChange: false,
@@ -41,12 +43,13 @@ const FormLogin = () => {
           placeholder="Digite sua senha"
         />
       </div>
-      <ButtonDefault type="submit">Entrar</ButtonDefault>
+      <ButtonDefault type="submit" disabled={loginUser.isPending}>
+        Entrar
+      </ButtonDefault>
     </form>
   )
 }
 export { FormLogin }
-
 {
   /* <div className="text-center mt-8">
  <p className="text-sm">
