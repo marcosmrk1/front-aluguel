@@ -12,9 +12,6 @@ export const usePostAuth = () => {
         password: loginUser.password,
         redirect: false,
       })
-
-      console.log('📊 Resultado:', result)
-
       if (!result?.ok) {
         throw new Error(result?.error || 'Erro ao autenticar')
       }
@@ -22,13 +19,11 @@ export const usePostAuth = () => {
       return result
     },
     onSuccess: () => {
-      console.log('✅ Login bem-sucedido!')
       toast.success('Bem-vindo')
-      // window.location.href = '/dashBoard'
+      window.location.href = '/dashBoard'
     },
     onError(error) {
-      console.error('❌ Erro:', error)
-      toast.error('Email ou senha incorretos')
+      handleAxiosError(error)
     },
   })
 

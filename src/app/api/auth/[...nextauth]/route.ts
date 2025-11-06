@@ -3,10 +3,7 @@ import GithubProvider from 'next-auth/providers/github'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import GoogleProvider from 'next-auth/providers/google'
 import { send } from 'process'
-interface ICrendecias {
-  email: string
-  password: string
-}
+
 declare module 'next-auth' {
   interface Session {
     accessToken?: string
@@ -71,8 +68,11 @@ const handler = NextAuth({
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     }),
   ],
+
   session: {
     strategy: 'jwt',
+    maxAge: 2 * 24 * 60 * 60, // 2 dias
+    updateAge: 24 * 60 * 60, // Atualiza apenas 1x por dia
   },
 
   callbacks: {

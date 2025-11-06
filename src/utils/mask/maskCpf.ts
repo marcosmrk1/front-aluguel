@@ -1,10 +1,9 @@
-const maskCpf = (cpf: string): string => {
-  const cleanedCpf = cpf.replace(/\D/g, '')
-  const match = cleanedCpf.match(/^(\d{3})(\d{3})(\d{3})(\d{2})$/)
-  if (match) {
-    return `${match[1]}.${match[2]}.${match[3]}-${match[4]}`
-  }
-  return cpf
-}
+export const maskCpf = (value: string): string => {
+  const numbers = value.replace(/\D/g, '')
 
-export { maskCpf }
+  return numbers
+    .replace(/(\d{3})(\d)/, '$1.$2')
+    .replace(/(\d{3})(\d)/, '$1.$2')
+    .replace(/(\d{3})(\d{1,2})/, '$1-$2')
+    .replace(/(-\d{2})\d+?$/, '$1')
+}
