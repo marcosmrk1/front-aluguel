@@ -1,10 +1,12 @@
-const maskPhone = (phone: string): string => {
-  const cleanedPhone = phone.replace(/\D/g, '')
-  const match = cleanedPhone.match(/^(\d{2})(\d{5})(\d{4})$/)
-  if (match) {
-    return `(${match[1]}) ${match[2]}-${match[3]}`
-  }
-  return phone
-}
+export const maskPhone = (value: string): string => {
+  const numbers = value.replace(/\D/g, '')
 
-export { maskPhone }
+  if (numbers.length <= 10) {
+    return numbers.replace(/(\d{2})(\d)/, '($1) $2').replace(/(\d{4})(\d)/, '$1-$2')
+  }
+
+  return numbers
+    .replace(/(\d{2})(\d)/, '($1) $2')
+    .replace(/(\d{5})(\d)/, '$1-$2')
+    .replace(/(-\d{4})\d+?$/, '$1')
+}

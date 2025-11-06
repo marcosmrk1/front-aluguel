@@ -10,11 +10,19 @@ interface InputGenericProps extends React.InputHTMLAttributes<HTMLInputElement> 
 }
 
 const baseStyle =
-  'block w-full pl-10 pr-3 py-3 border rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 transition-all duration-200'
+  'block w-full pl-10 pr-3 py-3 border rounded-xl   placeholder-gray-500 focus:outline-none focus:ring-2 transition-all duration-200'
 const errorStyle = 'text-red-500 text-xs block mt-1 min-h-3'
 const InputDefault = ({ formik, name, mask, icon, ...rest }: InputGenericProps) => {
   const errorInput = formik.errors[name] ? (formik.errors[name] as string) : null
-  const existingMask = mask ? mask(formik.values[name]) : formik.values[name] || ''
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    if (mask) {
+      const maskedValue = mask(value)
+      formik.setFieldValue(name, maskedValue)
+      return
+    }
+    return formik.handleChange(e)
+  }
   return (
     <div className="w-full">
       <label htmlFor="email" className="block text-sm font-medium mb-1">
@@ -25,9 +33,13 @@ const InputDefault = ({ formik, name, mask, icon, ...rest }: InputGenericProps) 
           <div className="h-5 w-5 absolute left-2 top-1/2 -translate-y-1/2 ">{icon}</div>
         )}
         <Input
+          name={name}
+          id={rest.id}
+          type={rest.type}
+          placeholder={rest.placeholder}
           className={baseStyle}
-          onChange={formik.handleChange}
-          value={existingMask}
+          onChange={handleChange}
+          value={formik.values[name]}
           {...rest}
         />
       </div>

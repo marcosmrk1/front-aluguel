@@ -3,6 +3,8 @@ import { Geist, Geist_Mono } from 'next/font/google'
 
 import '@/app/globals.css'
 import { ThemeProvider } from '../components/theme.provider'
+import { ToastProvider } from '@/providers/ToastContainer'
+import QueryProvider from '@/providers/QueryProvider'
 const geistSans = Geist({
   variable: '--font-geist-sans',
   subsets: ['latin'],
@@ -28,11 +30,12 @@ export default function RootLayout({
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         <ThemeProvider
           attribute="class"
-          defaultTheme="system"
+          defaultTheme="light"
           enableSystem
           disableTransitionOnChange
         >
-          {children}
+          <ToastProvider />
+          <QueryProvider>{children}</QueryProvider>
         </ThemeProvider>
       </body>
     </html>
