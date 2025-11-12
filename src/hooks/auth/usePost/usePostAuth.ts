@@ -18,9 +18,8 @@ export const usePostAuth = () => {
 
       return result
     },
-    onSuccess: () => {
-      toast.success('Bem-vindo')
-      window.location.href = '/dashBoard'
+    onSuccess: (data) => {
+      window.location.href = '/dashBoard?login=true'
     },
     onError(error) {
       handleAxiosError(error)

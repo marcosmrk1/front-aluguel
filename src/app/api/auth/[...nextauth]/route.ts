@@ -8,13 +8,26 @@ declare module 'next-auth' {
   interface Session {
     accessToken?: string
     refreshToken?: string
+    user: {
+      email: string
+      name: string
+      profileComplete?: boolean
+    }
   }
   interface User {
     accessToken?: string
     refreshToken?: string
     exp?: number
+    profileComplete?: boolean
   }
 }
+
+declare module 'next-auth/jwt' {
+  interface JWT {
+    profileComplete?: boolean
+  }
+}
+
 const URL_BACKEND = process.env.NEXT_PUBLIC_DEVELOP_ENV_ENDPOINT
   ? process.env.NEXT_PUBLIC_URL_DOCKER_WINDOWS_WITH_LINUX
   : process.env.NEXT_PUBLIC_API_URL
@@ -58,12 +71,18 @@ const handler = NextAuth({
 
         const user = await res.json()
         if (user?.accessToken) {
-          return user
+          return {
+            id: user.id,
+            name: user.nome,
+            email: user.email,
+            profileComplete: user.profileComplete,
+          }
         }
         return null
       },
     }),
     GoogleProvider({
+      name: 'Google',
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     }),
@@ -81,6 +100,7 @@ const handler = NextAuth({
         token.accessToken = user.accessToken
         token.refreshToken = user.refreshToken
         token.exp = user.exp
+        token.profileComplete = user.profileComplete
       }
 
       if (token.exp && Date.now() < (token.exp as number) * 1000) {
@@ -100,6 +120,7 @@ const handler = NextAuth({
     async session({ session, token }) {
       session.accessToken = token.accessToken as string | undefined
       session.refreshToken = token.refreshToken as string | undefined
+      session.user.profileComplete = token.profileComplete as boolean // ⬅️ ADICIONE ISSO
 
       return session
     },
