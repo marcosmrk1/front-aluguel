@@ -12,8 +12,7 @@ import {
 } from '@/components/ui/sidebar'
 import { ThemeSwitcher } from '@/components/Menu/ThemeSwitcher'
 
-// Menu items.
-const items = [
+const itemsProfileComplete = [
   {
     title: 'Home',
     url: '#',
@@ -40,8 +39,19 @@ const items = [
     icon: Settings,
   },
 ]
-
-export function AppSidebar() {
+const itemsProfileIncomplete = [
+  {
+    title: 'Completar Perfil',
+    url: '/complete-profile',
+    icon: Settings,
+  },
+]
+export function AppSidebar({
+  userCompleteProfile = null,
+}: {
+  userCompleteProfile: boolean | null
+}) {
+  const items = userCompleteProfile ? itemsProfileComplete : itemsProfileIncomplete
   return (
     <Sidebar>
       <SidebarContent>

@@ -8,7 +8,7 @@ const contratos = [
   {
     id: 1,
     inquilino: {
-      nome: 'Marcos Paulo',
+      name: 'Marcos Paulo',
     },
     imovel: {
       descricao: 'Apartamento 2 quartos no Centro',
@@ -22,7 +22,7 @@ const contratos = [
   {
     id: 2,
     inquilino: {
-      nome: 'João Silva',
+      name: 'João Silva',
     },
     imovel: {
       descricao: 'Casa térrea com garagem no bairro Primavera',
@@ -36,7 +36,7 @@ const contratos = [
   {
     id: 3,
     inquilino: {
-      nome: 'Ana Souza',
+      name: 'Ana Souza',
     },
     imovel: {
       descricao: 'Kitnet próxima à universidade',
@@ -54,7 +54,7 @@ const columns: GridColDef[] = [
     field: 'inquilino',
     headerName: 'Inquilino',
     width: 180,
-    valueGetter: (value, row) => row.inquilino.nome,
+    valueGetter: (value, row) => row.inquilino.name,
   },
   {
     field: 'imovel',

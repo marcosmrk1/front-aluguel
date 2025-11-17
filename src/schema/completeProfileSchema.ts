@@ -1,8 +1,7 @@
 import { cpfRegex, phoneRegex } from '@/utils/regex'
+import { object, string } from 'yup'
 import * as yup from 'yup'
-
-const registerSchema = yup.object().shape({
-  name: yup.string().required('O nome é obrigatório'),
+export const completeProfileSchema = object({
   cpf: yup
     .string()
     .matches(cpfRegex, 'CPF inválido')
@@ -15,11 +14,4 @@ const registerSchema = yup.object().shape({
       'Telefone inválido. Use o formato (XX) XXXXX-XXXX ou (XX) XXXX-XXXX',
     )
     .required('O telefone é obrigatório'),
-  email: yup.string().email('E-mail inválido').required('O e-mail é obrigatório'),
-  password: yup
-    .string()
-    .min(6, 'A senha deve ter pelo menos 6 caracteres')
-    .required('A senha é obrigatória'),
 })
-
-export { registerSchema }

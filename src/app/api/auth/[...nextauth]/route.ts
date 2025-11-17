@@ -12,9 +12,11 @@ declare module 'next-auth' {
       email: string
       name: string
       profileComplete?: boolean
+      id: number
     }
   }
   interface User {
+    id: number
     accessToken?: string
     refreshToken?: string
     exp?: number
@@ -24,6 +26,7 @@ declare module 'next-auth' {
 
 declare module 'next-auth/jwt' {
   interface JWT {
+    id?: number
     profileComplete?: boolean
   }
 }
@@ -97,10 +100,13 @@ const handler = NextAuth({
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
+        token.id = typeof user.id === 'number' ? user.id : parseInt(user.id as string)
         token.accessToken = user.accessToken
         token.refreshToken = user.refreshToken
         token.exp = user.exp
         token.profileComplete = user.profileComplete
+
+        console.log('🔐 JWT callback - token atualizado:', token)
       }
 
       if (token.exp && Date.now() < (token.exp as number) * 1000) {
@@ -118,27 +124,50 @@ const handler = NextAuth({
       return token
     },
     async session({ session, token }) {
+      console.log('👤 Session callback - token:', token)
+
+      session.user.id = token.id as number
       session.accessToken = token.accessToken as string | undefined
       session.refreshToken = token.refreshToken as string | undefined
-      session.user.profileComplete = token.profileComplete as boolean // ⬅️ ADICIONE ISSO
+      session.user.profileComplete = token.profileComplete as boolean
+
+      console.log('👤 Session callback - session atualizada:', session)
 
       return session
     },
     async signIn({ user, account }) {
       if (account?.provider === 'google') {
-        const payloadForBackend = {
-          email: user.email,
-          nome: user.name,
-          googleId: user.id,
+        try {
+          const payloadForBackend = {
+            email: user.email,
+            name: user.name,
+            googleId: user.id,
+          }
+
+          console.log('🔵 Enviando para backend:', payloadForBackend)
+
+          const backendUser = await sendUserGoogleForBackend(payloadForBackend)
+
+          // ✅ IMPORTANTE: Salva os dados do backend no objeto user
+          user.id = backendUser.data.user.id
+          user.profileComplete = backendUser.data.user.profileComplete
+          user.accessToken = backendUser.accessToken
+          user.refreshToken = backendUser.refreshToken
+          user.exp = backendUser.exp
+
+          console.log('💾 User atualizado:', user)
+        } catch (error) {
+          console.error('❌ Erro ao autenticar com Google:', error)
+          return false // Bloqueia o login se houver erro
         }
-        await sendUserGoogleForBackend(payloadForBackend)
       }
       return true
     },
   },
 })
 const sendUserGoogleForBackend = async (profile: any) => {
-  ;`${URL_BACKEND}/auth/social`
+  console.log('📤 Enviando para:', `${URL_BACKEND}/auth/social`)
+
   const res = await fetch(`${URL_BACKEND}/auth/social`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -146,7 +175,14 @@ const sendUserGoogleForBackend = async (profile: any) => {
   })
 
   const data = await res.json()
-  if (!res.ok) throw new Error(data.message || 'Erro ao autenticar com Google')
+
+  console.log('📥 Resposta da API:', data)
+
+  if (!res.ok) {
+    console.error('❌ Erro na API:', data)
+    throw new Error(data.message || 'Erro ao autenticar com Google')
+  }
+
   return data
 }
 
