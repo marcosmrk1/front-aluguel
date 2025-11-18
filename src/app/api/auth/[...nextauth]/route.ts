@@ -21,6 +21,26 @@ declare module 'next-auth' {
     refreshToken?: string
     exp?: number
     profileComplete?: boolean
+    data?: {
+      accessToken?: string
+      refreshToken?: string
+      exp?: number
+      profileComplete?: boolean
+      user?: {
+        id: number
+        profileComplete?: boolean
+      }
+    }
+  }
+}
+
+declare module 'next-auth/jwt' {
+  interface JWT {
+    id?: number
+    profileComplete?: boolean
+    accessToken?: string
+    refreshToken?: string
+    exp?: number
   }
 }
 
@@ -101,12 +121,12 @@ const handler = NextAuth({
     async jwt({ token, user }) {
       if (user) {
         token.id = typeof user.id === 'number' ? user.id : parseInt(user.id as string)
-        token.accessToken = user.accessToken
-        token.refreshToken = user.refreshToken
-        token.exp = user.exp
-        token.profileComplete = user.profileComplete
+        token.accessToken = user.data?.accessToken || user.accessToken
+        token.refreshToken = user.data?.refreshToken || user.refreshToken
+        token.exp = user.data?.exp || user.exp
+        token.profileComplete = user.data?.profileComplete || user.profileComplete
 
-        console.log('🔐 JWT callback - token atualizado:', token)
+        // console.log('🔐 JWT callback - token atualizado:', token)
       }
 
       if (token.exp && Date.now() < (token.exp as number) * 1000) {
@@ -116,22 +136,22 @@ const handler = NextAuth({
       if (token.refreshToken) {
         const refreshed = await refreshToken(token.refreshToken as string)
         if (refreshed?.accessToken) {
-          token.accessToken = refreshed.accessToken
-          token.refreshToken = refreshed.refreshToken
-          token.exp = refreshed.exp
+          token.accessToken = refreshed.data.accessToken
+          token.refreshToken = refreshed.data.refreshToken
+          token.exp = refreshed.data.exp
         }
       }
       return token
     },
     async session({ session, token }) {
-      console.log('👤 Session callback - token:', token)
+      // console.log('👤 Session callback - token:', token)
 
       session.user.id = token.id as number
       session.accessToken = token.accessToken as string | undefined
       session.refreshToken = token.refreshToken as string | undefined
       session.user.profileComplete = token.profileComplete as boolean
 
-      console.log('👤 Session callback - session atualizada:', session)
+      // console.log('👤 Session callback - session atualizada:', session)
 
       return session
     },
@@ -144,16 +164,16 @@ const handler = NextAuth({
             googleId: user.id,
           }
 
-          console.log('🔵 Enviando para backend:', payloadForBackend)
+          // console.log('🔵 Enviando para backend:', payloadForBackend)
 
           const backendUser = await sendUserGoogleForBackend(payloadForBackend)
-
+          console.log('✅ Resposta do backend:', backendUser.data)
           // ✅ IMPORTANTE: Salva os dados do backend no objeto user
           user.id = backendUser.data.user.id
           user.profileComplete = backendUser.data.user.profileComplete
-          user.accessToken = backendUser.accessToken
-          user.refreshToken = backendUser.refreshToken
-          user.exp = backendUser.exp
+          user.accessToken = backendUser.data.accessToken
+          user.refreshToken = backendUser.data.refreshToken
+          user.exp = backendUser.data.exp
 
           console.log('💾 User atualizado:', user)
         } catch (error) {
@@ -166,7 +186,7 @@ const handler = NextAuth({
   },
 })
 const sendUserGoogleForBackend = async (profile: any) => {
-  console.log('📤 Enviando para:', `${URL_BACKEND}/auth/social`)
+  // console.log('📤 Enviando para:', `${URL_BACKEND}/auth/social`)
 
   const res = await fetch(`${URL_BACKEND}/auth/social`, {
     method: 'POST',
@@ -175,8 +195,6 @@ const sendUserGoogleForBackend = async (profile: any) => {
   })
 
   const data = await res.json()
-
-  console.log('📥 Resposta da API:', data)
 
   if (!res.ok) {
     console.error('❌ Erro na API:', data)

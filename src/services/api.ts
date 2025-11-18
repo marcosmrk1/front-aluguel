@@ -13,21 +13,24 @@ export const api = axios.create({
 
 /**
  * Interceptor de Request — executa ANTES de cada requisição.
- * Pega o token do NextAuth usando getSession (cliente).
+ * Pega o accessToken da sessão do NextAuth no cliente.
  */
 api.interceptors.request.use(
   async (config) => {
-    // ✅ getSession funciona no cliente
-    const session = await getSession()
+    try {
+      const session = await getSession()
 
-    console.log('🔐 Sessão no interceptor:', session)
-    console.log('🔑 AccessToken:', session?.accessToken)
+      console.log('🔐 Sessão completa:', session)
+      console.log('🔑 AccessToken:', session?.accessToken)
 
-    if (session?.accessToken) {
-      config.headers.Authorization = `Bearer ${session.accessToken}`
-      console.log('✅ Authorization header adicionado')
-    } else {
-      console.warn('⚠️ Nenhum accessToken encontrado na sessão')
+      if (session?.accessToken) {
+        config.headers.Authorization = `Bearer ${session.accessToken}`
+        console.log('✅ Authorization header adicionado:', config.headers.Authorization)
+      } else {
+        console.warn('⚠️ Nenhum accessToken encontrado na sessão')
+      }
+    } catch (error) {
+      console.error('❌ Erro ao pegar sessão:', error)
     }
 
     return config
@@ -42,11 +45,15 @@ api.interceptors.request.use(
  * Interceptor de Response — trata erros e respostas.
  */
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    console.log('✅ Response recebido:', response.status)
+    return response
+  },
   (error) => {
+    console.error('❌ Erro na response:', error.response?.status)
+
     if (error.response?.status === 401) {
       console.warn('⚠️ Token expirado ou não autorizado.')
-      // Opcional: redirecionar para login
       // window.location.href = '/login'
     }
     return Promise.reject(error)

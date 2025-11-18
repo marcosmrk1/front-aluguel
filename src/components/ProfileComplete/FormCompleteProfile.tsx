@@ -17,21 +17,15 @@ const initialValues = {
 const FormCompleteProfile = () => {
   const { mutate, isPending } = useUpdateCompleteUser()
   const { dataUser, isLoading } = useGetProprietario()
-  
   const formik = useFormik({
     initialValues,
     onSubmit: (values) => {
-      console.log('📝 Formulário submetido:', values)
-      console.log('👤 Dados do usuário:', dataUser)
-
       if (!dataUser?.id) {
-        console.error('❌ ID do usuário não encontrado')
         toast.error('Erro: ID do usuário não encontrado')
         return
       }
 
-      // ✅ Agora passa apenas o data, o ID é pego automaticamente no servidor
-      mutate(values)
+      mutate({ data: values, id: dataUser.id })
     },
     validationSchema: completeProfileSchema,
   })
