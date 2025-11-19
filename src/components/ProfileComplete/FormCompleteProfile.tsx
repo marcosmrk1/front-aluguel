@@ -8,8 +8,8 @@ import { completeProfileSchema } from '@/schema/completeProfileSchema'
 import { maskCpf } from '@/utils/mask/maskCpf'
 import { maskPhone } from '@/utils/mask/maskPhone'
 import { useFormik } from 'formik'
+import { useRouter } from 'next/navigation'
 import { toast } from 'react-toastify'
-
 const initialValues = {
   cpf: '',
   phone: '',
@@ -17,6 +17,8 @@ const initialValues = {
 const FormCompleteProfile = () => {
   const { mutate, isPending } = useUpdateCompleteUser()
   const { dataUser, isLoading } = useGetProprietario()
+  const router = useRouter()
+
   const formik = useFormik({
     initialValues,
     onSubmit: (values) => {
@@ -33,33 +35,42 @@ const FormCompleteProfile = () => {
   if (isLoading) {
     return <div>Carregando...</div>
   }
+  const perfilComplete = dataUser?.profileComplete
+  if (perfilComplete) {
+    toast.info('Perfil já está completo !')
+    router.push('/dashboard')
+  }
 
   return (
-    <form onSubmit={formik.handleSubmit}>
-      <Card className="p-6 space-y-4 w-4xl mx-auto mt-20">
-        <InputDefault
-          formik={formik}
-          name="cpf"
-          id="CPF"
-          type="text"
-          placeholder="Digite seu CPF"
-          mask={maskCpf}
-        />
-        <InputDefault
-          formik={formik}
-          name="phone"
-          id="Telefone"
-          type="text"
-          placeholder="Digite seu telefone"
-          mask={maskPhone}
-        />
-        <div className="flex justify-end">
-          <ButtonDefault type="submit" disabled={isPending}>
-            {isPending ? 'Salvando...' : 'Completar Perfil'}
-          </ButtonDefault>
-        </div>
-      </Card>
-    </form>
+    <>
+      {perfilComplete && (
+        <form onSubmit={formik.handleSubmit}>
+          <Card className="p-6 space-y-4 w-4xl mx-auto mt-20">
+            <InputDefault
+              formik={formik}
+              name="cpf"
+              id="CPF"
+              type="text"
+              placeholder="Digite seu CPF"
+              mask={maskCpf}
+            />
+            <InputDefault
+              formik={formik}
+              name="phone"
+              id="Telefone"
+              type="text"
+              placeholder="Digite seu telefone"
+              mask={maskPhone}
+            />
+            <div className="flex justify-end">
+              <ButtonDefault type="submit" disabled={isPending}>
+                {isPending ? 'Salvando...' : 'Completar Perfil'}
+              </ButtonDefault>
+            </div>
+          </Card>
+        </form>
+      )}
+    </>
   )
 }
 export { FormCompleteProfile }
