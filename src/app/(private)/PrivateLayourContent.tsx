@@ -11,7 +11,6 @@ import { useEffect } from 'react'
 function PrivateLayoutContent({ children }: { children: React.ReactNode }) {
   const { status, isAuthenticated } = useAuthSession()
   const { userCompleteProfile, isLoading } = useGetProprietario()
-  const router = useRouter()
 
   // useEffect(() => {
   //   if (status === 'unauthenticated') {
