@@ -1,35 +1,37 @@
 import NextAuth from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import GoogleProvider from 'next-auth/providers/google'
-
+import { IResponse } from '@/.interface/IResponse'
+import {
+  IAuthResponse,
+  IAuthUser,
+  IPayloadProfileGoogle,
+  IRefreshToken,
+  ENUM_AUTH_ERROR,
+} from '@/.interface/IAuth'
+import { IProprietarioLogin } from '@/.interface/IProprietario'
 declare module 'next-auth' {
   interface Session {
-    accessToken?: string
-    refreshToken?: string
-    jwtValidade?: string // ✅ Data de validade do JWT do backend
-    user: {
-      email: string
-      name: string
-      profileComplete?: boolean
-      id: number
-    }
+    jwtValidade: string
+    error: ENUM_AUTH_ERROR | undefined
+    user: IAuthUser
   }
   interface User {
     id: number
-    accessToken?: string
-    refreshToken?: string
-    exp?: string // ✅ SEMPRE string ISO do backend
-    profileComplete?: boolean
+    accessToken: string
+    refreshToken: string
+    accessTokenExpires: number
+    profileComplete: boolean
   }
 }
 
 declare module 'next-auth/jwt' {
   interface JWT {
-    id?: number
-    profileComplete?: boolean
-    accessToken?: string
-    refreshToken?: string
-    exp?: number // ✅ Internamente number (timestamp Unix)
+    id: number
+    profileComplete: boolean
+    accessToken: string
+    refreshToken: string
+    accessTokenExpires: number
   }
 }
 
@@ -39,18 +41,18 @@ const URL_BACKEND = process.env.NEXT_PUBLIC_DEVELOP_ENV_ENDPOINT
 
 const refreshToken = async (refreshToken: string) => {
   try {
-    const res = await fetch(`${URL_BACKEND}/refresh-token`, {
+    const res = await fetch(`${URL_BACKEND}/auth/refresh-token`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ refreshToken }),
     })
-    const response = await res.json()
-
+    const response: IResponse<IRefreshToken> = await res.json()
     if (!res.ok) throw new Error(response.message || 'Erro ao renovar token')
 
     return response
   } catch (error) {
     console.error('Erro ao renovar token', error)
+
     return null
   }
 }
@@ -67,9 +69,7 @@ const handler = NextAuth({
           placeholder: 'Digite sua senha',
         },
       },
-      async authorize(
-        credentials: Record<'email' | 'password', string> | undefined,
-      ): Promise<any> {
+      async authorize(credentials: IProprietarioLogin | undefined) {
         if (!credentials) return null
 
         const { email, password } = credentials
@@ -79,20 +79,17 @@ const handler = NextAuth({
           body: JSON.stringify({ email, password }),
         })
 
-        const response = await res.json()
-
-        console.log('📥 Resposta do backend (Credentials):', response)
+        const response: IResponse<IAuthResponse> = await res.json()
 
         if (response?.data?.accessToken) {
           return {
-            id: response.data.user?.id || response.data.id,
-            name: response.data.user?.name || response.data.name,
-            email: response.data.user?.email || response.data.email,
-            profileComplete:
-              response.data.user?.profileComplete || response.data.profileComplete,
+            id: response.data.user.id,
+            name: response.data.user.name,
+            email: response.data.user.email,
+            profileComplete: response.data.user.profileComplete,
             accessToken: response.data.accessToken,
             refreshToken: response.data.refreshToken,
-            exp: response.data.exp, // ✅ String ISO do backend
+            accessTokenExpires: Number(response.data.exp),
           }
         }
         return null
@@ -107,54 +104,47 @@ const handler = NextAuth({
 
   session: {
     strategy: 'jwt',
-    maxAge: 60 * 60, // ✅ 1 hora (igual ao backend token_ttl: 3600)
-    updateAge: 30 * 60, // ✅ Atualiza a cada 30 minutos
+    maxAge: 60 * 60,
+    updateAge: 30 * 60,
   },
 
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
+      // ✅ No login inicial
       if (user) {
-        token.id = typeof user.id === 'number' ? user.id : parseInt(user.id as string)
+        token.id = Number(user.id)
         token.accessToken = user.accessToken
         token.refreshToken = user.refreshToken
-
-        token.exp = Math.floor(new Date(user.exp as string).getTime() / 1000)
-
+        token.accessTokenExpires = user.accessTokenExpires
         token.profileComplete = user.profileComplete
       }
 
+      // ✅ Atualização de perfil completo
+      if (trigger === 'update' && session?.profileComplete !== undefined) {
+        token.profileComplete = session.profileComplete
+      }
+
+      // ✅ Verificar se tem exp válido
+      if (!token.accessTokenExpires) {
+        console.warn('⚠️ Token sem accessTokenExpires. Usuário deve relogar.')
+        return token
+      }
+
       const nowInSeconds = Math.floor(Date.now() / 1000)
+      const timeUntilExpiry = token.accessTokenExpires - nowInSeconds
 
-      if (token.exp && nowInSeconds >= (token.exp as number)) {
-        console.warn('⚠️ Token expirado! Tentando renovar...', {
-          exp: token.exp,
-          now: nowInSeconds,
-          diferenca: (token.exp as number) - nowInSeconds,
-        })
-
+      if (timeUntilExpiry <= 300) {
         if (token.refreshToken) {
-          const refreshed = await refreshToken(token.refreshToken as string)
+          const refreshed = await refreshToken(token.refreshToken)
 
           if (refreshed?.data?.accessToken) {
             token.accessToken = refreshed.data.accessToken
             token.refreshToken = refreshed.data.refreshToken
-
-            // ✅ SEMPRE converte string ISO para timestamp Unix
-            token.exp = Math.floor(
-              new Date(refreshed.data.exp as string).getTime() / 1000,
-            )
-
-            console.log('✅ Token renovado com sucesso!')
+            token.accessTokenExpires = Number(refreshed.data.exp)
             return token
           }
-        }
-
-        console.error('❌ Não foi possível renovar o token. Forçando logout...')
-        return {
-          ...token,
-          accessToken: undefined,
-          refreshToken: undefined,
-          exp: undefined,
+          token.error = ENUM_AUTH_ERROR.ERROR_REFRESH_TOKEN
+          return token
         }
       }
 
@@ -162,20 +152,25 @@ const handler = NextAuth({
     },
 
     async session({ session, token }) {
-      if (!token.accessToken) {
-        console.warn('⚠️ Token inválido na session callback')
-        return {} as any
+      console.log('🟢 session callback - token:', token)
+
+      if (!token.accessToken || !token.id) {
+        return { ...session, user: {} as IAuthUser, jwtValidade: '' }
       }
 
-      session.user.id = token.id as number
-      session.accessToken = token.accessToken as string
-      session.refreshToken = token.refreshToken as string
-      session.user.profileComplete = token.profileComplete as boolean
-      session.user.name = session.user.name || ''
+      session.user.id = token.id
+      session.user.email = token.email || ''
+      session.user.name = token.name || ''
+      session.user.profileComplete = token.profileComplete
 
-      // ✅ Define jwtValidade com o exp do JWT do backend
-      if (token.exp) {
-        session.jwtValidade = new Date((token.exp as number) * 1000).toISOString()
+      // ✅ ADICIONE ESTA LINHA: Passa o erro do token para a sessão
+      session.error = token.error as ENUM_AUTH_ERROR | undefined
+
+      // (Opcional) Se você precisar usar o accessToken no front para chamadas de API:
+      // session.accessToken = token.accessToken
+
+      if (token.accessTokenExpires) {
+        session.jwtValidade = new Date(token.accessTokenExpires * 1000).toISOString()
       }
 
       return session
@@ -184,10 +179,10 @@ const handler = NextAuth({
     async signIn({ user, account }) {
       if (account?.provider === 'google') {
         try {
-          const payloadForBackend = {
-            email: user.email,
-            name: user.name,
-            googleId: user.id,
+          const payloadForBackend: IPayloadProfileGoogle = {
+            email: user.email ?? '',
+            name: user.name ?? '',
+            googleId: String(user.id ?? ''),
           }
 
           const backendResponse = await sendUserGoogleForBackend(payloadForBackend)
@@ -198,7 +193,7 @@ const handler = NextAuth({
           user.profileComplete = backendResponse.data.user.profileComplete
           user.accessToken = backendResponse.data.accessToken
           user.refreshToken = backendResponse.data.refreshToken
-          user.exp = backendResponse.data.exp // ✅ String ISO do backend
+          user.accessTokenExpires = Number(backendResponse.data.exp)
         } catch (error) {
           console.error('❌ Erro ao autenticar com Google:', error)
           return false
@@ -209,14 +204,14 @@ const handler = NextAuth({
   },
 })
 
-const sendUserGoogleForBackend = async (profile: any) => {
+const sendUserGoogleForBackend = async (profile: IPayloadProfileGoogle) => {
   const res = await fetch(`${URL_BACKEND}/auth/social`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(profile),
   })
 
-  const response = await res.json()
+  const response: IResponse<IAuthResponse> = await res.json()
 
   if (!res.ok) {
     console.error('❌ Erro na API:', response)

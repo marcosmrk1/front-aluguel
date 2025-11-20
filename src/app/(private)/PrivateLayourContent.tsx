@@ -12,13 +12,6 @@ function PrivateLayoutContent({ children }: { children: React.ReactNode }) {
   const { status, isAuthenticated } = useAuthSession()
   const { userCompleteProfile, isLoading } = useGetProprietario()
 
-  // useEffect(() => {
-  //   if (status === 'unauthenticated') {
-  //     console.warn('⚠️ Usuário não autenticado, redirecionando...')
-  //     router.push('/login')
-  //   }
-  // }, [status, router])
-
   if (status === 'loading' || isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">

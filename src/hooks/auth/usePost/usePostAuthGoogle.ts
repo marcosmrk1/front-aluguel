@@ -6,7 +6,7 @@ export const usePostAuthGoogle = () => {
   const loginWithGoogle = useMutation({
     mutationFn: async () => {
       const result = await signIn('google', {
-        callbackUrl: '/dashBoard?login=true',
+        callbackUrl: '/dashboard?login=true',
         redirect: true,
       })
       return result

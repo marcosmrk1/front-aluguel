@@ -12,6 +12,7 @@ const isPublicRoute = (path: string) => {
 export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname
 
+  // ✅ Permite acesso público
   if (isPublicRoute(path)) {
     return NextResponse.next()
   }
@@ -22,17 +23,20 @@ export async function middleware(request: NextRequest) {
   })
 
   if (!token) {
+    console.log('❌ Não autenticado → /login')
     const loginUrl = new URL('/login', request.url)
-    loginUrl.searchParams.set('callbackUrl', path)
     return NextResponse.redirect(loginUrl)
   }
 
-  if (!token.profileComplete && path !== '/complete-profile') {
-    return NextResponse.redirect(new URL('/complete-profile', request.url))
+  if (!token?.profileComplete && path !== '/complete-profile') {
+    console.log('⚠️ Perfil incompleto → /complete-profile')
+    const completeProfileUrl = new URL('/complete-profile', request.url)
+    return NextResponse.redirect(completeProfileUrl)
   }
 
-  if (token.profileComplete && path === '/dashBoard/complete-profile') {
-    return NextResponse.redirect(new URL('/dashBoard', request.url))
+  if (token.profileComplete && path === '/complete-profile') {
+    const dashboardUrl = new URL('/dashboard', request.url)
+    return NextResponse.redirect(dashboardUrl)
   }
 
   return NextResponse.next()

@@ -19,7 +19,7 @@ export const usePostAuth = () => {
       return result
     },
     onSuccess: (data) => {
-      window.location.href = '/dashBoard?login=true'
+      window.location.href = '/dashboard?login=true'
     },
     onError(error) {
       handleAxiosError(error)

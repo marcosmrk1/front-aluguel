@@ -20,19 +20,12 @@ const useUpdateCompleteUser = () => {
         variables.id,
         variables.data,
       )
-
       return response
     },
-    onSuccess: async (data) => {
-      toast.success('Perfil atualizado com sucesso!')
-
-      // Atualiza a sessão do NextAuth
-      await updateSession({
-        profileComplete: true,
-      })
-
-      // Redireciona para o dashboard
-      router.push('/dashBoard?login=true')
+    onSuccess: async () => {
+      toast.success('Perfil completado com sucesso!')
+      await updateSession({ profileComplete: true })
+      router.push('/dashboard?login=true')
     },
     onError: (error) => {
       console.error('❌ Erro na mutation:', error)
@@ -42,11 +35,3 @@ const useUpdateCompleteUser = () => {
 }
 
 export { useUpdateCompleteUser }
-
-// Ao usar:
-// const { mutate } = useUpdateCompleteUser();
-
-// mutate({
-//   data: profileData,
-//   id: userId
-// });

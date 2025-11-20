@@ -3,24 +3,23 @@ import { CardOverall } from '@/components/Dashboard/CardOverall'
 import { RegistrationButton } from '@/components/Dashboard/RegistrationButton'
 import { TableContract } from '@/components/Dashboard/TableContract'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { toast } from 'react-toastify'
 
 const DashBoardContainer = () => {
   const searchParams = useSearchParams()
   const router = useRouter()
 
+  const hasShownToast = useRef(false)
+
   useEffect(() => {
     const loginSuccess = searchParams.get('login') === 'true'
 
-    if (loginSuccess) {
-      router.replace('/dashBoard')
+    if (loginSuccess && !hasShownToast.current) {
+      hasShownToast.current = true
+      router.replace('/dashboard', { scroll: false })
 
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          toast.success('Bem-vindo ao Dashboard!')
-        })
-      })
+      toast.success('Bem-vindo!')
     }
   }, [searchParams, router])
 
@@ -38,4 +37,5 @@ const DashBoardContainer = () => {
     </>
   )
 }
+
 export { DashBoardContainer }
