@@ -85,7 +85,6 @@ export function AppSidebar({
       <SidebarFooter>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3 overflow-hidden">
-            {/* Foto do Usuário ou Ícone Padrão */}
             {data?.user?.image ? (
               <img
                 src={data.user.image}
@@ -105,7 +104,6 @@ export function AppSidebar({
             </div>
           </div>
 
-          {/* Botão de Sair */}
           <button
             onClick={() => signOut({ callbackUrl: '/login' })}
             className="flex h-8 w-8 items-center justify-center rounded-md hover:bg-gray-100 hover:text-red-500 transition-colors cursor-pointer"
