@@ -1,10 +1,9 @@
 import { endPointService } from '@/services/endPointService'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { IProprietario } from '@/.interface/IProprietario'
-import { toast } from 'react-toastify'
 import { handleAxiosError } from '@/utils/defaultMessagesAxios/handleAxiosError'
 import { handleAxiosSuccess } from '@/utils/defaultMessagesAxios/handleAxiosSuccess'
-export function useCreateProprietario() {
+import { IProprietario } from '@/.interface/IProprietario'
+export function useCreateUser() {
   const queryClient = useQueryClient()
 
   const createUser = useMutation({

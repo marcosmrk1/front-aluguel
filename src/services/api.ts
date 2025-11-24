@@ -1,5 +1,4 @@
 import axios from 'axios'
-import { getSession } from 'next-auth/react'
 
 /**
  * Instância global do Axios configurada para comunicação com o backend.
@@ -13,27 +12,28 @@ export const api = axios.create({
 
 /**
  * Interceptor de Request — executa ANTES de cada requisição.
- * Pega o token do NextAuth e injeta no header Authorization.
+ * Busca o accessToken da API route /api/token (server-side).
  */
-api.interceptors.request.use(async (config) => {
-  const session = await getSession()
-  console.log(session, 'o que esta acotnecendo aqui')
-  if (session?.accessToken) {
-    config.headers.Authorization = `Bearer ${session.accessToken}`
-  }
+api.interceptors.request.use(
+  async (config) => {
+    try {
+      const res = await fetch('/api/auth/token')
 
-  return config
-})
+      if (res.ok) {
+        const { accessToken } = await res.json()
 
-/**
- * Interceptor de Response — trata erros e respostas.
- */
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      console.warn('Token expirado ou não autorizado.')
+        if (accessToken) {
+          config.headers.Authorization = `Bearer ${accessToken}`
+        }
+      }
+    } catch (error) {
+      console.error('❌ Erro ao buscar token:', error)
     }
+
+    return config
+  },
+  (error) => {
+    console.error('❌ Erro no interceptor de request:', error)
     return Promise.reject(error)
   },
 )

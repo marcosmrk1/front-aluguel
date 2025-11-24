@@ -1,38 +1,62 @@
 import NextAuth from 'next-auth'
-import GithubProvider from 'next-auth/providers/github'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import GoogleProvider from 'next-auth/providers/google'
-import { send } from 'process'
-
+import { IResponse } from '@/.interface/IResponse'
+import {
+  IAuthResponse,
+  IAuthUser,
+  IPayloadProfileGoogle,
+  IRefreshToken,
+  ENUM_AUTH_ERROR,
+} from '@/.interface/IAuth'
+import { IProprietarioLogin } from '@/.interface/IProprietario'
 declare module 'next-auth' {
   interface Session {
-    accessToken?: string
-    refreshToken?: string
+    jwtValidade: string
+    error: ENUM_AUTH_ERROR | undefined
+    user: IAuthUser
   }
   interface User {
-    accessToken?: string
-    refreshToken?: string
-    exp?: number
+    id: number
+    accessToken: string
+    refreshToken: string
+    accessTokenExpires: number
+    profileComplete: boolean
   }
 }
+
+declare module 'next-auth/jwt' {
+  interface JWT {
+    id: number
+    profileComplete: boolean
+    accessToken: string
+    refreshToken: string
+    accessTokenExpires: number
+  }
+}
+
 const URL_BACKEND = process.env.NEXT_PUBLIC_DEVELOP_ENV_ENDPOINT
   ? process.env.NEXT_PUBLIC_URL_DOCKER_WINDOWS_WITH_LINUX
   : process.env.NEXT_PUBLIC_API_URL
+
 const refreshToken = async (refreshToken: string) => {
   try {
-    const res = await fetch(`${URL_BACKEND}/refresh-token`, {
+    const res = await fetch(`${URL_BACKEND}/auth/refresh-token`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ refreshToken }),
     })
-    const data = await res.json()
-    if (!res.ok) throw new Error(data.message || 'Erro ao renovar token')
-    return data
+    const response: IResponse<IRefreshToken> = await res.json()
+    if (!res.ok) throw new Error(response.message || 'Erro ao renovar token')
+
+    return response
   } catch (error) {
     console.error('Erro ao renovar token', error)
-    return { error, refreshToken }
+
+    return null
   }
 }
+
 const handler = NextAuth({
   providers: [
     CredentialsProvider({
@@ -45,10 +69,9 @@ const handler = NextAuth({
           placeholder: 'Digite sua senha',
         },
       },
-      async authorize(
-        credentials: Record<'email' | 'password', string> | undefined,
-      ): Promise<any> {
+      async authorize(credentials: IProprietarioLogin | undefined) {
         if (!credentials) return null
+
         const { email, password } = credentials
         const res = await fetch(`${URL_BACKEND}/auth`, {
           method: 'POST',
@@ -56,14 +79,24 @@ const handler = NextAuth({
           body: JSON.stringify({ email, password }),
         })
 
-        const user = await res.json()
-        if (user?.accessToken) {
-          return user
+        const response: IResponse<IAuthResponse> = await res.json()
+
+        if (response?.data?.accessToken) {
+          return {
+            id: response.data.user.id,
+            name: response.data.user.name,
+            email: response.data.user.email,
+            profileComplete: response.data.user.profileComplete,
+            accessToken: response.data.accessToken,
+            refreshToken: response.data.refreshToken,
+            accessTokenExpires: Number(response.data.exp),
+          }
         }
         return null
       },
     }),
     GoogleProvider({
+      name: 'Google',
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     }),
@@ -71,62 +104,112 @@ const handler = NextAuth({
 
   session: {
     strategy: 'jwt',
-    maxAge: 2 * 24 * 60 * 60, // 2 dias
-    updateAge: 24 * 60 * 60, // Atualiza apenas 1x por dia
+    maxAge: 60 * 60,
+    updateAge: 30 * 60,
   },
 
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
+        token.id = Number(user.id)
         token.accessToken = user.accessToken
         token.refreshToken = user.refreshToken
-        token.exp = user.exp
+        token.accessTokenExpires = user.accessTokenExpires
+        token.profileComplete = user.profileComplete
       }
 
-      if (token.exp && Date.now() < (token.exp as number) * 1000) {
+      if (trigger === 'update' && session?.profileComplete !== undefined) {
+        token.profileComplete = session.profileComplete
+      }
+
+      if (!token.accessTokenExpires) {
+        console.warn('⚠️ Token sem accessTokenExpires. Usuário deve relogar.')
         return token
       }
 
-      if (token.refreshToken) {
-        const refreshed = await refreshToken(token.refreshToken as string)
-        if (refreshed?.accessToken) {
-          token.accessToken = refreshed.accessToken
-          token.refreshToken = refreshed.refreshToken
-          token.exp = refreshed.exp
+      const nowInSeconds = Math.floor(Date.now() / 1000)
+      const timeUntilExpiry = token.accessTokenExpires - nowInSeconds
+
+      if (timeUntilExpiry <= 300) {
+        if (token.refreshToken) {
+          const refreshed = await refreshToken(token.refreshToken)
+
+          if (refreshed?.data?.accessToken) {
+            token.accessToken = refreshed.data.accessToken
+            token.refreshToken = refreshed.data.refreshToken
+            token.accessTokenExpires = Number(refreshed.data.exp)
+            return token
+          }
+          token.error = ENUM_AUTH_ERROR.ERROR_REFRESH_TOKEN
+          return token
         }
       }
+
       return token
     },
+
     async session({ session, token }) {
-      session.accessToken = token.accessToken as string | undefined
-      session.refreshToken = token.refreshToken as string | undefined
+      if (!token.accessToken || !token.id) {
+        return { ...session, user: {} as IAuthUser, jwtValidade: '' }
+      }
+
+      session.user.id = token.id
+      session.user.email = token.email || ''
+      session.user.name = token.name || ''
+      session.user.profileComplete = token.profileComplete
+
+      session.error = token.error as ENUM_AUTH_ERROR | undefined
+
+      if (token.accessTokenExpires) {
+        session.jwtValidade = new Date(token.accessTokenExpires * 1000).toISOString()
+      }
 
       return session
     },
+
     async signIn({ user, account }) {
       if (account?.provider === 'google') {
-        const payloadForBackend = {
-          email: user.email,
-          nome: user.name,
-          googleId: user.id,
+        try {
+          const payloadForBackend: IPayloadProfileGoogle = {
+            email: user.email ?? '',
+            name: user.name ?? '',
+            googleId: String(user.id ?? ''),
+          }
+
+          const backendResponse = await sendUserGoogleForBackend(payloadForBackend)
+
+          user.id = backendResponse.data.user.id
+          user.name = backendResponse.data.user.name
+          user.email = backendResponse.data.user.email
+          user.profileComplete = backendResponse.data.user.profileComplete
+          user.accessToken = backendResponse.data.accessToken
+          user.refreshToken = backendResponse.data.refreshToken
+          user.accessTokenExpires = Number(backendResponse.data.exp)
+        } catch (error) {
+          console.error('❌ Erro ao autenticar com Google:', error)
+          return false
         }
-        await sendUserGoogleForBackend(payloadForBackend)
       }
       return true
     },
   },
 })
-const sendUserGoogleForBackend = async (profile: any) => {
-  ;`${URL_BACKEND}/auth/social`
+
+const sendUserGoogleForBackend = async (profile: IPayloadProfileGoogle) => {
   const res = await fetch(`${URL_BACKEND}/auth/social`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(profile),
   })
 
-  const data = await res.json()
-  if (!res.ok) throw new Error(data.message || 'Erro ao autenticar com Google')
-  return data
+  const response: IResponse<IAuthResponse> = await res.json()
+
+  if (!res.ok) {
+    console.error('❌ Erro na API:', response)
+    throw new Error(response.message || 'Erro ao autenticar com Google')
+  }
+
+  return response
 }
 
 export { handler as GET, handler as POST }

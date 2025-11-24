@@ -13,20 +13,20 @@ import { maskCpf } from '@/utils/mask/maskCpf'
 import { maskPhone } from '@/utils/mask/maskPhone'
 import { registerSchema } from '@/schema/RegisterSchema'
 import ButtonDefault from '@/components/DefaultComponents/ButtonDefault'
-import { useCreateProprietario } from '@/hooks/proprietario/useCreate/useCreateProprietario'
 import { useRouter } from 'next/navigation'
+import { useCreateUser } from '@/hooks/proprietario/useCreate/useCreateProprietario'
 
 const FormRegister = () => {
-  const { createUser } = useCreateProprietario()
+  const { createUser } = useCreateUser()
 
   const router = useRouter()
   const formik = useFormik({
     initialValues: {
       email: '',
-      telefone: '',
+      phone: '',
       password: '',
       cpf: '',
-      nome: '',
+      name: '',
     },
     onSubmit: (values) => {
       createUser.mutate(values)
@@ -50,7 +50,7 @@ const FormRegister = () => {
           <InputDefault
             icon={<PersonStandingIcon />}
             formik={formik}
-            name="nome"
+            name="name"
             id="Nome"
             type="text"
             placeholder="Digite seu nome"
@@ -75,7 +75,7 @@ const FormRegister = () => {
             icon={<Phone />}
             formik={formik}
             mask={maskPhone}
-            name="telefone"
+            name="phone"
             id="Telefone"
             type="text"
             placeholder="Digite seu telefone"

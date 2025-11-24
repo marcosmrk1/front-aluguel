@@ -1,11 +1,10 @@
-'use client'
-
-import { SessionProvider } from 'next-auth/react'
+import { PrivateLayoutClient } from '@/app/(private)/PrivateLayourContent'
+import { SidebarProvider } from '@/components/ui/sidebar'
 
 export default function PrivateLayout({ children }: { children: React.ReactNode }) {
   return (
-    <SessionProvider refetchInterval={5 * 60} refetchOnWindowFocus={true}>
-      {children}
-    </SessionProvider>
+    <main>
+      <PrivateLayoutClient>{children}</PrivateLayoutClient>
+    </main>
   )
 }
