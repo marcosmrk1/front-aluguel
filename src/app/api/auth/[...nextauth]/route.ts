@@ -152,8 +152,6 @@ const handler = NextAuth({
     },
 
     async session({ session, token }) {
-      console.log('🟢 session callback - token:', token)
-
       if (!token.accessToken || !token.id) {
         return { ...session, user: {} as IAuthUser, jwtValidade: '' }
       }
@@ -163,11 +161,7 @@ const handler = NextAuth({
       session.user.name = token.name || ''
       session.user.profileComplete = token.profileComplete
 
-      // ✅ ADICIONE ESTA LINHA: Passa o erro do token para a sessão
       session.error = token.error as ENUM_AUTH_ERROR | undefined
-
-      // (Opcional) Se você precisar usar o accessToken no front para chamadas de API:
-      // session.accessToken = token.accessToken
 
       if (token.accessTokenExpires) {
         session.jwtValidade = new Date(token.accessTokenExpires * 1000).toISOString()
