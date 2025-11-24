@@ -110,7 +110,6 @@ const handler = NextAuth({
 
   callbacks: {
     async jwt({ token, user, trigger, session }) {
-      // ✅ No login inicial
       if (user) {
         token.id = Number(user.id)
         token.accessToken = user.accessToken
@@ -119,12 +118,10 @@ const handler = NextAuth({
         token.profileComplete = user.profileComplete
       }
 
-      // ✅ Atualização de perfil completo
       if (trigger === 'update' && session?.profileComplete !== undefined) {
         token.profileComplete = session.profileComplete
       }
 
-      // ✅ Verificar se tem exp válido
       if (!token.accessTokenExpires) {
         console.warn('⚠️ Token sem accessTokenExpires. Usuário deve relogar.')
         return token
