@@ -15,12 +15,13 @@ import { registerSchema } from '@/schema/RegisterSchema'
 import ButtonDefault from '@/components/DefaultComponents/ButtonDefault'
 import { useRouter } from 'next/navigation'
 import { useCreateUser } from '@/hooks/proprietario/useCreate/useCreateProprietario'
+import { IProprietarioCreate } from '@/.interface/IProprietario'
 
 const FormRegister = () => {
   const { createUser } = useCreateUser()
 
   const router = useRouter()
-  const formik = useFormik({
+  const formik = useFormik<IProprietarioCreate>({
     initialValues: {
       email: '',
       phone: '',

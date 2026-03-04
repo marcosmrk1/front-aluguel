@@ -10,4 +10,6 @@ export interface IProprietario {
 }
 export type IProprietarioLogin = Pick<IProprietario, 'email' | 'password'>
 
+export type IProprietarioCreate = Omit<IProprietario, 'id' | 'profileComplete' | 'image'>
+
 export type IProprietarioCompleteProfile = Pick<IProprietario, 'cpf' | 'phone'>
