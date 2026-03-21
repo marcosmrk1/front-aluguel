@@ -35,9 +35,7 @@ declare module 'next-auth/jwt' {
   }
 }
 
-const URL_BACKEND = process.env.NEXT_PUBLIC_DEVELOP_ENV_ENDPOINT
-  ? process.env.NEXT_PUBLIC_URL_DOCKER_WINDOWS_WITH_LINUX
-  : process.env.NEXT_PUBLIC_API_URL
+const URL_BACKEND = process.env.BACKEND_URL
 
 const refreshToken = async (refreshToken: string) => {
   try {
@@ -70,18 +68,33 @@ const handler = NextAuth({
         },
       },
       async authorize(credentials: IProprietarioLogin | undefined) {
-        if (!credentials) return null
+        console.log('🔐 [authorize] chamado com credentials:', credentials?.email)
+
+        if (!credentials) {
+          console.warn('⚠️ [authorize] credentials ausentes')
+          return null
+        }
 
         const { email, password } = credentials
-        const res = await fetch(`${URL_BACKEND}/auth`, {
+        const url = `${URL_BACKEND}/auth`
+        console.log('📡 [authorize] chamando backend:', url)
+
+        const res = await fetch(url, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email, password }),
         })
 
+        console.log('📥 [authorize] status da resposta:', res.status, res.statusText)
+
         const response: IResponse<IAuthResponse> = await res.json()
+        console.log(
+          '📦 [authorize] body da resposta:',
+          JSON.stringify(response, null, 2),
+        )
 
         if (response?.data?.accessToken) {
+          console.log('✅ [authorize] login OK, usuário:', response.data.user.email)
           return {
             id: response.data.user.id,
             name: response.data.user.name,
@@ -92,6 +105,8 @@ const handler = NextAuth({
             accessTokenExpires: Number(response.data.exp),
           }
         }
+
+        console.error('❌ [authorize] accessToken ausente na resposta')
         return null
       },
     }),
